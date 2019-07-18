@@ -28,7 +28,7 @@ def db(db_url):
     Base.metadata.drop_all()
     Base.metadata.create_all()
 
-    yield SimpleNamespace(Author=Author, Schema=Schema, session=session)
+    yield SimpleNamespace(Author=Author, Schema=Schema, session=session, metadata=Base.metadata)
     Base.metadata.drop_all()
 
 

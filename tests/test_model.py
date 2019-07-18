@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 
@@ -21,6 +23,12 @@ def test_marshalling(db, data):
         author = s.query(db.Author).get(author_id)
         assert author.data == data
         assert not (author.data is data)
+
+        field, = db.metadata.bind.execute('select data from author').fetchone()
+
+        result = json.loads(field)
+
+        assert isinstance(result, dict)
 
 
 def test_mutable(db, data):
