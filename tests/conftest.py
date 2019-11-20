@@ -2,7 +2,6 @@ import os
 import typing
 from contextlib import contextmanager
 from types import SimpleNamespace
-from typing import KT, VT, _alias
 
 import pydantic
 import pytest
@@ -10,7 +9,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.ext.declarative import as_declarative
-from sqlalchemy.ext.mutable import MutableDict, MutableList
+from sqlalchemy.ext.mutable import Mutable
 from sqlalchemy.orm import sessionmaker
 
 from sqlalchemy_pydantic_field import PydanticField
@@ -59,11 +58,8 @@ class Base:
 class Schema(pydantic.BaseModel):
     text: str
     year: int
-    ids: MutableList
-    meta: MutableDict
-
-    class Config:
-        validate_assignment = True
+    ids: typing.List[int]
+    meta: typing.Dict[str, str]
 
 
 class Author(Base):

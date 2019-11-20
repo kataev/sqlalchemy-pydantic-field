@@ -30,7 +30,7 @@ def test_marshalling(db, data):
         assert isinstance(result, dict)
 
 
-def test_mutable(db, data):
+def test_mutable_attr(db, data):
     author = db.Author('test', data)
 
     with db.session() as s:
@@ -41,6 +41,7 @@ def test_mutable(db, data):
     with db.session() as s:
         author = s.query(db.Author).get(author_id)
         author.data.year = 1989
+        assert author in s.dirty
 
     with db.session() as s:
         author = s.query(db.Author).get(author_id)
