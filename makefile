@@ -1,6 +1,6 @@
 .PHONY: init test lint pretty precommit_install
 
-BIN = .venv/bin/
+BIN = ~/.pyenv/versions/3.8.0/envs/sqlalchemy-pydantic-field/bin/
 CODE = sqlalchemy_pydantic_field
 TESTS = tests
 

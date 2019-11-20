@@ -1,8 +1,8 @@
 import os
 import typing
-from typing import _alias, KT, VT
 from contextlib import contextmanager
 from types import SimpleNamespace
+from typing import KT, VT, _alias
 
 import pydantic
 import pytest
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.ext.declarative import as_declarative
-from sqlalchemy.ext.mutable import MutableList, MutableDict
+from sqlalchemy.ext.mutable import MutableDict, MutableList
 from sqlalchemy.orm import sessionmaker
 
 from sqlalchemy_pydantic_field import PydanticField
@@ -28,7 +28,9 @@ def db(db_url):
     Base.metadata.drop_all()
     Base.metadata.create_all()
 
-    yield SimpleNamespace(Author=Author, Schema=Schema, session=session, metadata=Base.metadata)
+    yield SimpleNamespace(
+        Author=Author, Schema=Schema, session=session, metadata=Base.metadata
+    )
     Base.metadata.drop_all()
 
 

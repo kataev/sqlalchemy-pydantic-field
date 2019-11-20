@@ -5,10 +5,9 @@ import pytest
 
 @pytest.fixture()
 def data(db):
-    return db.Schema(text='hello',
-                     year=2019,
-                     ids=[1, 2, 3],
-                     meta={'foo': 'bar'})
+    return db.Schema(
+        text='hello', year=2019, ids=[1, 2, 3], meta={'foo': 'bar'}
+    )
 
 
 def test_marshalling(db, data):

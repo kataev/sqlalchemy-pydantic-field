@@ -5,8 +5,12 @@ from sqlalchemy import JSON, UnicodeText
 from sqlalchemy.types import TypeDecorator, TypeEngine
 
 if typing.TYPE_CHECKING:
-    from sqlalchemy.engine.default import DefaultDialect  # noqa: F401  # pylint: disable=unused-import
-    from sqlalchemy.sql.type_api import TypeEngine  # noqa: F401  # pylint: disable=unused-import
+    from sqlalchemy.engine.default import (
+        DefaultDialect,
+    )  # noqa: F401  # pylint: disable=unused-import
+    from sqlalchemy.sql.type_api import (
+        TypeEngine,
+    )  # noqa: F401  # pylint: disable=unused-import
 
 __all__ = ['PydanticField']
 
@@ -18,7 +22,8 @@ class PydanticField(TypeDecorator):  # pylint: disable=abstract-method
         self,
         model: typing.Type[pydantic.BaseModel],
         json_type: 'TypeEngine' = JSON,
-        *args, **kwargs
+        *args,
+        **kwargs,
     ) -> None:
         self._model = model
         self._json_type = json_type
@@ -28,7 +33,9 @@ class PydanticField(TypeDecorator):  # pylint: disable=abstract-method
         """Select impl by dialect."""
         return dialect.type_descriptor(UnicodeText)
 
-    def process_bind_param(self, value: pydantic.BaseModel, dialect: 'DefaultDialect') -> typing.Union[str, typing.Any]:
+    def process_bind_param(
+        self, value: pydantic.BaseModel, dialect: 'DefaultDialect'
+    ) -> typing.Union[str, typing.Any]:
         """Encode data, if required."""
         if value is None:
             return value
@@ -36,9 +43,7 @@ class PydanticField(TypeDecorator):  # pylint: disable=abstract-method
         return value.json()
 
     def process_result_value(
-        self,
-        value: typing.Union[str, typing.Any],
-        dialect: 'DefaultDialect'
+        self, value: typing.Union[str, typing.Any], dialect: 'DefaultDialect'
     ) -> typing.Any:
         """Decode data, if required."""
         if value is None:
@@ -46,6 +51,8 @@ class PydanticField(TypeDecorator):  # pylint: disable=abstract-method
 
         return self._model.parse_raw(value, allow_pickle=False)
 
-    def process_literal_param(self, value: typing.Any, dialect: 'DefaultDialect') -> typing.Any:
+    def process_literal_param(
+        self, value: typing.Any, dialect: 'DefaultDialect'
+    ) -> typing.Any:
         """Re-use of process_bind_param."""
         return self.process_bind_param(value, dialect)

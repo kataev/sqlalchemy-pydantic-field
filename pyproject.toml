@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sqlalchemy-pydantic-field"
-version = "0.0.0"
+version = "0.1.0"
 description = "Wrap sqlalchemy json field with pydantic models"
 authors = ["Denis Kataev <denis.a.kataev+git@gmail.com>"]
 license = "MIT"
@@ -12,13 +12,13 @@ keywords = []
 [tool.poetry.dependencies]
 python = "^3.6"
 sqlalchemy = "^1.3"
-pydantic = "^0.30.0"
+pydantic = "^1.1"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^18.3-alpha.0",allows-prereleases = true}
 bumpversion = "^0.5.3"
 flake8-awesome = "^1.0"
-mypy = "^0.660.0"
+mypy = "^0.740.0"
 pylint = "^2.2"
 pytest = "^3.0"
 pytest-cov = "^2.6"
