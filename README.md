@@ -17,28 +17,40 @@ Wrap sqlalchemy json field with pydantic models
     pip install sqlalchemy-pydantic-field
 
 ## Usage
+    @as_declarative()
+    class Base:
+        pass
 
-...
 
-## For developers
+    class Schema(pydantic.BaseModel):
+        text: str
+        year: int
+        ids: MutableList
+        meta: MutableDict
 
-### Create venv and install deps
+        class Config:
+            validate_assignment = True
 
-    make init
 
-### Install git precommit hook
+    class Author(Base):
+        __tablename__ = 'author'
 
-    make precommit_install
+        id = sa.Column('author_id', sa.Integer, primary_key=True)
+        name = sa.Column(sa.String, nullable=False)
+        data = sa.Column(PydanticField(Schema, json_type=JSON))
 
-### Run linters, autoformat, tests etc.
+        def __init__(self, name: str, data: Schema):
+            self.name = name
+            self.data = data
+            
+    data = Schema(text='hello',
+                  year=2019,
+                  ids=[1, 2, 3],
+                  meta={'foo': 'bar'})
+    author = db.Author('test', data)
 
-    make pretty lint test
-
-### Bump new version
-
-    make bump_major
-    make bump_minor
-    make bump_patch
+    with db.session() as s:
+        s.add(author)
 
 ## License
 
