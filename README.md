@@ -17,6 +17,8 @@ Wrap sqlalchemy json field with pydantic models
     pip install sqlalchemy-pydantic-field
 
 ## Usage
+
+```python
     @as_declarative()
     class Base:
         pass
@@ -51,6 +53,7 @@ Wrap sqlalchemy json field with pydantic models
 
     with db.session() as s:
         s.add(author)
+```
 
 ## License
 
