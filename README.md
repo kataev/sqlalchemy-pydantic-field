@@ -19,40 +19,40 @@ Wrap sqlalchemy json field with pydantic models
 ## Usage
 
 ```python
-    @as_declarative()
-    class Base:
-        pass
+@as_declarative()
+class Base:
+    pass
 
 
-    class Schema(pydantic.BaseModel):
-        text: str
-        year: int
-        ids: MutableList
-        meta: MutableDict
+class Schema(pydantic.BaseModel):
+    text: str
+    year: int
+    ids: MutableList
+    meta: MutableDict
 
-        class Config:
-            validate_assignment = True
+    class Config:
+        validate_assignment = True
 
 
-    class Author(Base):
-        __tablename__ = 'author'
+class Author(Base):
+    __tablename__ = 'author'
 
-        id = sa.Column('author_id', sa.Integer, primary_key=True)
-        name = sa.Column(sa.String, nullable=False)
-        data = sa.Column(PydanticField(Schema, json_type=JSON))
+    id = sa.Column('author_id', sa.Integer, primary_key=True)
+    name = sa.Column(sa.String, nullable=False)
+    data = sa.Column(PydanticField(Schema, json_type=JSON))
 
-        def __init__(self, name: str, data: Schema):
-            self.name = name
-            self.data = data
-            
-    data = Schema(text='hello',
-                  year=2019,
-                  ids=[1, 2, 3],
-                  meta={'foo': 'bar'})
-    author = db.Author('test', data)
+    def __init__(self, name: str, data: Schema):
+        self.name = name
+        self.data = data
 
-    with db.session() as s:
-        s.add(author)
+data = Schema(text='hello',
+              year=2019,
+              ids=[1, 2, 3],
+              meta={'foo': 'bar'})
+author = db.Author('test', data)
+
+with db.session() as s:
+    s.add(author)
 ```
 
 ## License
