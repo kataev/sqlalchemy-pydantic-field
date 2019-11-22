@@ -1,8 +1,10 @@
 import typing
 
 import pydantic
+from pydantic.class_validators import ROOT_KEY
+from pydantic.fields import SHAPE_LIST, SHAPE_MAPPING, SHAPE_SET
 from sqlalchemy import JSON, UnicodeText, event
-from sqlalchemy.ext.mutable import Mutable, MutableDict
+from sqlalchemy.ext.mutable import Mutable, MutableDict, MutableList
 from sqlalchemy.types import TypeDecorator, TypeEngine
 
 if typing.TYPE_CHECKING:
@@ -13,7 +15,7 @@ if typing.TYPE_CHECKING:
         TypeEngine,
     )  # noqa: F401  # pylint: disable=unused-import
 
-__all__ = ['PydanticField']
+__all__ = ['MutationTrackingPydanticField']
 
 
 @classmethod
@@ -43,8 +45,12 @@ def _listen_on_attribute(cls, attribute, coerce, parent_cls):
             if coerce:
                 val = cls.coerce(key, val)
                 state.dict[key] = val
-            if hasattr(val, '__dict__') and hasattr(val.__dict__, '_parents'):
-                val.__dict__._parents[state.obj()] = key
+
+            if isinstance(val, pydantic.BaseModel):
+                if not cls.model.__custom_root_type__:
+                    val.__dict__._parents[state.obj()] = key
+                else:
+                    val.__root__._parents[state.obj()] = key
             else:
                 val._parents[state.obj()] = key
 
@@ -67,12 +73,11 @@ def _listen_on_attribute(cls, attribute, coerce, parent_cls):
         if not isinstance(value, cls):
             value = cls.coerce(key, value)
         if value is not None:
-            if hasattr(value, '__dict__') and hasattr(
-                value.__dict__, '_parents'
-            ):
-                value.__dict__._parents[target.obj()] = key
-            else:
-                value._parents[target.obj()] = key
+            if isinstance(value, pydantic.BaseModel):
+                if not cls.model.__custom_root_type__:
+                    value.__dict__._parents[target.obj()] = key
+                else:
+                    value.__root__._parents[target.obj()] = key
         if isinstance(oldvalue, cls):
             oldvalue._parents.pop(target.obj(), None)
         return value
@@ -99,7 +104,31 @@ def _listen_on_attribute(cls, attribute, coerce, parent_cls):
     event.listen(parent_cls, 'unpickle', unpickle, raw=True, propagate=True)
 
 
-class PydanticField(TypeDecorator):  # pylint: disable=abstract-method
+@classmethod
+def coerce(cls, key, value):
+    if value is None:
+        return None
+    if isinstance(value, cls.model):
+        if not cls.model.__custom_root_type__:
+            object.__setattr__(value, '__dict__', MutableDict(value.__dict__))
+        else:
+            root = cls.model.__fields__[ROOT_KEY]
+            if root.shape == SHAPE_MAPPING:
+                value.__dict__[ROOT_KEY] = MutableDict(
+                    value.__dict__[ROOT_KEY]
+                )
+            if root.shape == SHAPE_LIST:
+                value.__dict__[ROOT_KEY] = MutableList(
+                    value.__dict__[ROOT_KEY]
+                )
+        return value
+    msg = "Attribute '%s' does not accept objects of type %s"
+    raise ValueError(msg % (key, type(value)))
+
+
+class MutationTrackingPydanticField(
+    TypeDecorator
+):  # pylint: disable=abstract-method
     impl = TypeEngine  # Special placeholder
 
     def __init__(  # pylint: disable=keyword-arg-before-vararg
@@ -114,23 +143,14 @@ class PydanticField(TypeDecorator):  # pylint: disable=abstract-method
 
         super().__init__(*args, **kwargs)
 
-        @classmethod
-        def coerce(cls, key, value):
-            if value is None:
-                return None
-            if isinstance(value, model):
-                # breakpoint()
-                object.__setattr__(
-                    value, '__dict__', MutableDict(value.__dict__)
-                )
-                return value
-            msg = "Attribute '%s' does not accept objects of type %s"
-            raise ValueError(msg % (key, type(value)))
-
         self.mutable = type(
-            f'MutablePydanticModel{model.__name__}',
+            f'{model.__name__}MutationTrackingModel',
             (Mutable,),
-            {'coerce': coerce, '_listen_on_attribute': _listen_on_attribute},
+            {
+                'model': model,
+                'coerce': coerce,
+                '_listen_on_attribute': _listen_on_attribute,
+            },
         )
         self.mutable.as_mutable(self)
 

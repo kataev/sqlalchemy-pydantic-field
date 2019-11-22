@@ -12,7 +12,7 @@ from sqlalchemy.ext.declarative import as_declarative
 from sqlalchemy.ext.mutable import Mutable
 from sqlalchemy.orm import sessionmaker
 
-from sqlalchemy_pydantic_field import PydanticField
+from sqlalchemy_pydantic_field import MutationTrackingPydanticField
 
 
 @pytest.fixture()
@@ -28,7 +28,12 @@ def db(db_url):
     Base.metadata.create_all()
 
     yield SimpleNamespace(
-        Author=Author, Schema=Schema, session=session, metadata=Base.metadata
+        Author=Author,
+        Schema=Schema,
+        session=session,
+        metadata=Base.metadata,
+        ListSchema=ListSchema,
+        Book=Book,
     )
     Base.metadata.drop_all()
 
@@ -62,13 +67,26 @@ class Schema(pydantic.BaseModel):
     meta: typing.Dict[str, str]
 
 
+class ListSchema(pydantic.BaseModel):
+    __root__: typing.List[int]
+
+
 class Author(Base):
     __tablename__ = 'author'
 
     id = sa.Column('author_id', sa.Integer, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
-    data = sa.Column(PydanticField(Schema, json_type=JSON))
+    data = sa.Column(MutationTrackingPydanticField(Schema, json_type=JSON))
 
     def __init__(self, name: str, data: Schema):
         self.name = name
         self.data = data
+
+
+class Book(Base):
+    __tablename__ = 'book'
+
+    id = sa.Column('book_id', sa.Integer, primary_key=True)
+    pages = sa.Column(
+        MutationTrackingPydanticField(ListSchema, json_type=JSON)
+    )
