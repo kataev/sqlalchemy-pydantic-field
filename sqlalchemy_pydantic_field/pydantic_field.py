@@ -125,6 +125,11 @@ def coerce(cls, key, value):
     return value
 
 
+class PydanticJsonPath:
+    def __init__(self, model: typing.Type[pydantic.BaseModel]):
+        self._model = model
+
+
 class MutationTrackingPydanticField(
     TypeDecorator
 ):  # pylint: disable=abstract-method
@@ -141,7 +146,9 @@ class MutationTrackingPydanticField(
         *args,
         **kwargs,
     ) -> None:
+        self.path = PydanticJsonPath(model)
         self._model = model
+
         self._json_type = json_type
 
         super().__init__(*args, **kwargs)
