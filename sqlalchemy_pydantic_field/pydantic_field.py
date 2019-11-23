@@ -5,6 +5,7 @@ from pydantic.class_validators import ROOT_KEY
 from pydantic.fields import SHAPE_LIST, SHAPE_MAPPING, SHAPE_SET
 from sqlalchemy import JSON, UnicodeText, event
 from sqlalchemy.ext.mutable import Mutable, MutableDict, MutableList
+from sqlalchemy.sql.sqltypes import Indexable
 from sqlalchemy.types import TypeDecorator, TypeEngine
 
 if typing.TYPE_CHECKING:
@@ -108,28 +109,30 @@ def _listen_on_attribute(cls, attribute, coerce, parent_cls):
 def coerce(cls, key, value):
     if value is None:
         return None
-    if isinstance(value, cls.model):
-        if not cls.model.__custom_root_type__:
-            object.__setattr__(value, '__dict__', MutableDict(value.__dict__))
-        else:
-            root = cls.model.__fields__[ROOT_KEY]
-            if root.shape == SHAPE_MAPPING:
-                value.__dict__[ROOT_KEY] = MutableDict(
-                    value.__dict__[ROOT_KEY]
-                )
-            if root.shape == SHAPE_LIST:
-                value.__dict__[ROOT_KEY] = MutableList(
-                    value.__dict__[ROOT_KEY]
-                )
+    if not isinstance(value, cls.model):
+        msg = "Attribute '%s' does not accept objects of type %s"
+        raise ValueError(msg % (key, type(value)))
+
+    if not cls.model.__custom_root_type__:
+        object.__setattr__(value, '__dict__', MutableDict(value.__dict__))
         return value
-    msg = "Attribute '%s' does not accept objects of type %s"
-    raise ValueError(msg % (key, type(value)))
+
+    root = cls.model.__fields__[ROOT_KEY]
+    if root.shape == SHAPE_MAPPING:
+        value.__dict__[ROOT_KEY] = MutableDict(value.__dict__[ROOT_KEY])
+    elif root.shape == SHAPE_LIST:
+        value.__dict__[ROOT_KEY] = MutableList(value.__dict__[ROOT_KEY])
+    return value
 
 
 class MutationTrackingPydanticField(
     TypeDecorator
 ):  # pylint: disable=abstract-method
     impl = TypeEngine  # Special placeholder
+
+    @property
+    def comparator_factory(self):
+        return self._json_type.comparator_factory
 
     def __init__(  # pylint: disable=keyword-arg-before-vararg
         self,
