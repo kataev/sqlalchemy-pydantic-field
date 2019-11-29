@@ -166,7 +166,7 @@ class MutationTrackingPydanticField(
 
     def load_dialect_impl(self, dialect: 'DefaultDialect') -> 'TypeEngine':
         """Select impl by dialect."""
-        return dialect.type_descriptor(UnicodeText)
+        return dialect.type_descriptor(self._json_type)
 
     def process_bind_param(
         self, value: pydantic.BaseModel, dialect: 'DefaultDialect'
