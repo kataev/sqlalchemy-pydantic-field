@@ -11,6 +11,7 @@
 ## Description
 
 Wrap sqlalchemy json field with pydantic models
+NOTE: Not for production use (have a bug: wraps json in json on postgresql)
 
 ## Installation
 
